@@ -1,9 +1,9 @@
 <script setup>
-  import { ref, computed, watch, nextTick } from 'vue';
-
+  import { ref, computed, watch, nextTick, onMounted } from 'vue';
+  import { useRoute } from 'vue-router/composables';
   import useLocale from '@/hooks/use-locale';
   import useStore from '@/hooks/use-store';
-
+  import { debounce } from 'lodash';
   // #if APP !== 'apm'
   import BookmarkPop from './bookmark-pop';
   // #else
@@ -22,7 +22,7 @@
       type: Object,
     },
   });
-
+  const route = useRoute();
   const emit = defineEmits(['refresh', 'height-change']);
   const store = useStore();
   const { $t } = useLocale();
@@ -108,6 +108,24 @@
     { immediate: true },
   );
 
+  watch(
+    sqlQueryValue,
+    (newValue) => {
+      debouncedStoreValue('sql',JSON.stringify(newValue));
+    }
+  );
+  watch(
+    uiQueryValue,
+    (newValue) => {
+      debouncedStoreValue('ui',JSON.stringify(newValue));
+    }
+  );
+  const debouncedStoreValue = debounce((key, value) => {
+    localStorage.setItem('initQueryValue',JSON.stringify({
+      key,
+      value
+    }));
+  }, 200);
   const handleBtnQueryClick = () => {
     if (!isInputLoading.value) {
       store.commit('updateIndexItemParams', {
@@ -239,6 +257,24 @@
       }
     } catch (error) {}
   };
+
+  onMounted(()=>{
+    if(route.query.keyword || route.query.addition){
+      return
+    }
+    const initQueryValueString = localStorage.getItem('initQueryValue');
+    if (!initQueryValueString) {
+      return;
+    }
+    try {
+      const { key = '', value = '' } = JSON.parse(initQueryValueString) || {};
+      const isUI = key === 'ui';
+      activeIndex.value = isUI ? 0 : 1;
+      (isUI ? uiQueryValue : sqlQueryValue).value =  JSON.parse(value);
+    } catch (error) {
+      console.error('Error parsing initQueryValue from localStorage:', error);
+    }
+  })
 </script>
 <template>
   <div class="search-bar-container">
