@@ -36,11 +36,14 @@
       <div class="switcher-tips">
         <i class="bk-icon icon-info-circle" />
         <span>
-          {{ this.$t("该设置可以将采集设备的元数据信息补充至日志中") }}
+          {{ this.$t('该设置可以将采集设备的元数据信息补充至日志中') }}
         </span>
       </div>
     </div>
-    <div v-if="switcherValue" class="filter-table-container">
+    <div
+      v-if="switcherValue"
+      class="filter-table-container"
+    >
       <bk-select
         ref="select"
         searchable
@@ -66,98 +69,95 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import $http from '@/api';
-const props = defineProps({
-  metadata: {
-    type: Array,
-    required: true,
-  },
-});
-const switcherValue = ref(false);
-const selectValue = ref([]);
-const groupList = ref([]);
-const emit = defineEmits(['extra-labels-change']);
-const emitExtraLabels = () => {
-  const result = groupList.value.reduce((accumulator, item) => {
-    if (selectValue.value.includes(item.field)) {
-      accumulator.push({ key: item.field, value: item.key });
-    }
-    return accumulator;
-  }, []);
-  emit("extra-labels-change", result);
-};
-
-const switcherChange = (val) => {
-  if (!val) {
-    emit("extra-labels-change", []);
-  }
-};
-
-const remote = (keyword) => {
-  if (treeRef.value) {
-    treeRef.value.filter(keyword);
-  }
-};
-
-const handleValuesChange = (options) => {
-  if (treeRef.value) {
-    treeRef.value.setChecked(options.id, { emitEvent: true, checked: false });
-  }
-};
-
-const handleClear = () => {
-  if (treeRef.value) {
-    treeRef.value.removeChecked({ emitEvent: false });
-  }
-};
-
-// 获取元数据
-const getDeviceMetaData = async () => {
-  try {
-    const res = await $http .request(
-      "linkConfiguration/getSearchObjectAttribute"
-    );
-    const { scope, host } = res.data;
-    groupList.value.push(
-      ...scope.map((item) => {
-        item.key = "scope";
-        return item;
-      })
-    );
-    groupList.value.push(
-      ...host.map((item) => {
-        item.key = "host";
-        return item;
-      })
-    );
-    selectValue.value = props.metadata.map( item => {
-      if (item.key.startsWith('host.')) {
-        return item.key.slice(5);
-      } else {
-        return item.key;
+  import { ref, onMounted, watch } from 'vue';
+  import $http from '@/api';
+  const props = defineProps({
+    metadata: {
+      type: Array,
+      required: true,
+    },
+  });
+  const switcherValue = ref(false);
+  const selectValue = ref([]);
+  const groupList = ref([]);
+  const emit = defineEmits(['extra-labels-change']);
+  const emitExtraLabels = () => {
+    const result = groupList.value.reduce((accumulator, item) => {
+      if (selectValue.value.includes(item.field)) {
+        accumulator.push({ key: item.field, value: item.key });
       }
-    });
-  } catch (e) {
-    console.warn(e);
-  }
-};
+      return accumulator;
+    }, []);
+    emit('extra-labels-change', result);
+  };
 
-onMounted(() => {
-  getDeviceMetaData();
-  if (props.metadata.filter((item) => item.key).length) {
-    switcherValue.value = true;
-  }
-});
+  const switcherChange = val => {
+    if (!val) {
+      emit('extra-labels-change', []);
+    }
+  };
 
-watch(selectValue, () => {
-  emitExtraLabels();
-});
+  const remote = keyword => {
+    if (treeRef.value) {
+      treeRef.value.filter(keyword);
+    }
+  };
+
+  const handleValuesChange = options => {
+    if (treeRef.value) {
+      treeRef.value.setChecked(options.id, { emitEvent: true, checked: false });
+    }
+  };
+
+  const handleClear = () => {
+    if (treeRef.value) {
+      treeRef.value.removeChecked({ emitEvent: false });
+    }
+  };
+
+  // 获取元数据
+  const getDeviceMetaData = async () => {
+    try {
+      const res = await $http.request('linkConfiguration/getSearchObjectAttribute');
+      const { scope, host } = res.data;
+      groupList.value.push(
+        ...scope.map(item => {
+          item.key = 'scope';
+          return item;
+        }),
+      );
+      groupList.value.push(
+        ...host.map(item => {
+          item.key = 'host';
+          return item;
+        }),
+      );
+      selectValue.value = props.metadata.map(item => {
+        if (item.key.startsWith('host.')) {
+          return item.key.slice(5);
+        } else {
+          return item.key;
+        }
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  onMounted(() => {
+    getDeviceMetaData();
+    if (props.metadata.filter(item => item.key).length) {
+      switcherValue.value = true;
+    }
+  });
+
+  watch(selectValue, () => {
+    emitExtraLabels();
+  });
 </script>
 <style lang="scss" scoped>
-.filter-table-container {
-  margin-top: 10px;
-  width: 518px;
-}
-
+  .filter-table-container {
+    margin-top: 10px;
+    width: 518px;
+  }
 </style>

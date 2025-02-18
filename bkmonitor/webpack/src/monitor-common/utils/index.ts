@@ -51,7 +51,10 @@ export const setGlobalBizId = () => {
   const isEmailSubscriptions = location.hash.indexOf('email-subscriptions') > -1;
   const isSpicialEvent = !!getUrlParam('specEvent');
   const isNoBusiness = location.hash.indexOf('no-business') > -1;
+
   const localBizId = localStorage.getItem(LOCAL_BIZ_STORE_KEY);
+  const defaultBizId = Number(window.default_biz_id) || '';
+
   const bizList = window.space_list || [];
   const authList = bizList.filter(item => !item.is_demo);
   const hasAuth = id => authList.some(item => +id === +item.bk_biz_id);
@@ -81,9 +84,10 @@ export const setGlobalBizId = () => {
     return false;
   };
   if (bizId !== window.bk_biz_id && !isInSpaceList(bizId) && hasAuth(window.bk_biz_id)) {
-    if (hasAuth(localBizId)) {
-      window.bk_biz_id = +localBizId;
-      window.cc_biz_id = +localBizId;
+    const newBizId = defaultBizId || localBizId;
+    if (hasAuth(newBizId)) {
+      window.bk_biz_id = +newBizId;
+      window.cc_biz_id = +newBizId;
     }
     const url = new URL(window.location.href);
     const { searchParams } = url;
@@ -101,7 +105,8 @@ export const setGlobalBizId = () => {
     if (isNoBusiness && !bizList.length) {
       return true;
     }
-    const newBizId = spaceItem?.bk_biz_id || window.cc_biz_id;
+    // 设置过默认id时，优先取defaultBizId
+    const newBizId = defaultBizId || spaceItem?.bk_biz_id || window.cc_biz_id;
     // search with space_uid
     if (spaceUid) {
       window.space_uid = spaceUid;
@@ -177,7 +182,7 @@ export const setGlobalBizId = () => {
  * @param amt - 要加深（正数）或淡化（负数）颜色的量。有效范围：-255 到 255。
  * @returns 与输入颜色相同格式的修改后的颜色，为 "#RRGGBB" 或 "RRGGBB"。
  */
-export const lightenDarkenColor = (color: string, amt: number): string => {
+export const lightenDarkenColor = (color: string, amt: number, alpha = 1): string => {
   // 从颜色字符串中删除 '#' 并将其转换为数字
   const num = Number.parseInt(color.replace(/^#/, ''), 16);
 
@@ -188,9 +193,23 @@ export const lightenDarkenColor = (color: string, amt: number): string => {
   const r = clamp((num >> 16) + amt);
   const g = clamp(((num >> 8) & 0x00ff) + amt);
   const b = clamp((num & 0x0000ff) + amt);
-
+  if (alpha !== 1) {
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
+  }
   // 返回修改后的颜色，格式与输入颜色相同（"#" 开头或不带 "#"）
   return (color.startsWith('#') ? '#' : '') + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+};
+export const updateColorOpacity = (color: string, alpha: number): string => {
+  // 检查颜色是否以 '#' 开头，并移除 '#'
+  const hex = color.startsWith('#') ? color.slice(1) : color;
+
+  // 解析红、绿、蓝的十六进制值
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+
+  // 返回 rgba 颜色值
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
 /**
@@ -207,7 +226,7 @@ export const commonPageSizeSet = (size: number) => {
 export const commonPageSizeGet = () => {
   const size = localStorage.getItem(COMMON_PAGE_SIZE_KEY);
   const sizeNum = Number(size);
-  if (size && !isNaN(sizeNum)) {
+  if (size && !Number.isNaN(sizeNum)) {
     return sizeNum;
   }
   commonPageSizeSet(10);

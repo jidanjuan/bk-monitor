@@ -29,6 +29,7 @@ import { Component, InjectReactive, Mixins, Prop, Ref, Watch } from 'vue-propert
 import { ofType } from 'vue-tsx-support';
 
 import dayjs from 'dayjs';
+import difference from 'lodash/difference';
 import {
   actionDateHistogram,
   actionTopN,
@@ -69,6 +70,7 @@ import EmptyTable from './empty-table';
 import EventChart from './event-chart';
 import AlarmConfirm from './event-detail/alarm-confirm';
 import AlarmDispatch from './event-detail/alarm-dispatch';
+
 // import EventDetailSlider from './event-detail/event-detail-slider';
 import ManualDebugStatus from './event-detail/manual-debug-status';
 import ManualProcess from './event-detail/manual-process';
@@ -92,6 +94,7 @@ import {
 import { INIT_COMMON_FILTER_DATA, getOperatorDisabled } from './utils';
 
 import type { TType as TSliderType } from './event-detail/event-detail-slider';
+
 // import { showAccessRequest } from 'monitor-pc/components/access-request-dialog';
 import type { EmptyStatusOperationType, EmptyStatusType } from 'monitor-pc/components/empty-status/types';
 import type { TimeRangeType } from 'monitor-pc/components/time-range/time-range';
@@ -129,7 +132,7 @@ const allActionFieldList = [
   'strategy_name',
   'operate_target_string',
 ];
-const allIncidentFieldList = ['incident_name', 'status', 'level', 'assignees', 'handlers', 'labels'];
+const allIncidentFieldList = ['status', 'level', 'assignees', 'handlers', 'labels'];
 const isEn = docCookies.getItem(LANGUAGE_COOKIE_KEY) === 'en';
 export const commonAlertFieldMap = {
   status: [
@@ -454,7 +457,6 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
     assignee: [],
     alertIds: [],
   };
-
   // 过滤业务已选择是否为空
   filterSelectIsEmpty = false;
   showPermissionTips = true;
@@ -607,8 +609,10 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
         });
         vm.handleBatchAlert(params.batchAction);
       } else {
-        // 正常进入告警页情况下不打开详情，只有通过告警通知进入的才展开详情
-        const needShowDetail = !!vm.$route.query.collectId && location.search.includes('specEvent');
+        // 正常进入告警页情况下不打开详情，只有通过告警通知进入的才展开详情（带collectId）
+        // 新版首页搜索跳转过来打开详情(带alertId)
+        const needShowDetail =
+          (!!vm.$route.query.collectId || !!vm.$route.query.alertId) && location.search.includes('specEvent');
         if (needShowDetail) {
           vm.handleFirstShowDetail();
         }
@@ -736,6 +740,14 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       /* 带collectId是事件范围设为近15天 */
       defaultData.timeRange = ['now-30d', 'now'];
     }
+
+    /** 新版首页带alertId跳转事件中心 */
+    if (defaultData.alertId) {
+      defaultData.queryString = defaultData.queryString
+        ? `${defaultData.queryString} AND id : ${defaultData.alertId}`
+        : `id : ${defaultData.alertId}`;
+    }
+
     /** 处理指标参数 */
     if (defaultData.metricId?.length) {
       const metricStr = `metric : (${defaultData.metricId.map(item => `"${item}"`).join(' OR ')})`;
@@ -830,6 +842,7 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       overview,
       total,
       code,
+      greyed_spaces,
     } = await incidentList(params, { needRes: true, needMessage: false })
       .then(res => {
         !onlyOverview && (this.filterInputStatus = 'success');
@@ -840,6 +853,7 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
           this.$bkMessage(error_details || { message, theme: 'error' });
         }
         return {
+          greyed_spaces: [],
           aggs: [],
           incidents: [],
           overview: [],
@@ -849,6 +863,7 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       });
     return {
       aggs,
+      greyed_spaces,
       list:
         list?.map(item => {
           // 处理记录的具体内容不可直接转换成html
@@ -963,7 +978,6 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       overview,
       total,
       code,
-      enable_aiops_incident,
     } = await incidentOverview(this.handleGetSearchParams(onlyOverview), { needRes: true, needMessage: false })
       .then(res => {
         !onlyOverview && (this.filterInputStatus = 'success');
@@ -974,7 +988,6 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
         //   this.$bkMessage({ message, theme: 'error' });
         // }
         return {
-          enable_aiops_incident: false,
           aggs: [],
           alerts: [],
           overview: [],
@@ -988,7 +1001,6 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       this.handleGetEventCount(ids);
     }
     return {
-      enable_aiops_incident,
       aggs,
       list: list?.map(item => ({
         ...item,
@@ -1254,14 +1266,11 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
       this.handleGetSearchFaultList(true),
     ];
     const [{ overview }, { overview: actionOverview }, faultOverviewData] = await Promise.all(filterDataPromise).catch(
-      () => [{ overview: [] }, { overview: [] }, { overview: [], enable_aiops_incident: false }]
+      () => [{ overview: [] }, { overview: [] }, { overview: [] }]
     );
     const faultOverview = faultOverviewData?.overview ?? {};
-    /** 是否打开故障根因 */
-    const { enable_aiops_incident } = faultOverviewData as any;
-    this.commonFilterData = [overview, enable_aiops_incident ? { ...faultOverview } : '', { ...actionOverview }].filter(
-      item => !!item && item.id
-    );
+    this.commonFilterData = [overview, { ...faultOverview }, { ...actionOverview }].filter(item => !!item && item.id);
+
     this.commonFilterLoading = false;
     if (!this.activeFilterId) {
       this.activeFilterId = overview.id;
@@ -1274,7 +1283,7 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
           faultOverview,
           ...(overview?.children || []),
           ...actionOverview.children,
-          ...(enable_aiops_incident && faultOverview.children ? faultOverview.children : []),
+          ...(faultOverview.children ? faultOverview.children : []),
         ].find(item => item.id === this.activeFilterId)?.name || '';
       if (!this.activeFilterName) {
         this.activeFilterId = overview.id;
@@ -1340,7 +1349,7 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
     } else {
       needTopN && (await this.handleGetSearchTopNList(false));
     }
-    const [{ aggs, list, total, code }] = await Promise.all(promiseList);
+    const [{ aggs, list, total, code, greyed_spaces }] = await Promise.all(promiseList);
 
     // 语法错误
     this.filterInputStatus = code !== grammaticalErrorCode ? 'success' : 'error';
@@ -1382,13 +1391,36 @@ class Event extends Mixins(authorityMixinCreate(eventAuth)) {
         this.noDataString = '';
       } else {
         this.noDataType = this.hasSearchParams ? 'search-empty' : 'empty';
-        if (!this.bizIds?.some(id => [authorityBizId, hasDataBizId].includes(id))) {
-          this.noDataString = this.$t('你当前有 {0} 个业务权限，暂无告警事件', [window.space_list.length]);
-          if (this.searchType === 'incident') {
-            this.noDataString = this.$t('你当前有 {0} 个业务权限，暂无故障', [window.space_list.length]);
+        /**
+         * 故障错误信息展示
+         * 1. 有权限空间/与我的故障 无数据则根据当前人员是否有开启灰度空间，有：展示当前有多少空间权限， 无：提示开启灰度
+         * 2. 当前已开启灰度空间无数据，不处理
+         * 3. 当前多选空间，存在未灰度空间，则将为灰度空间拼接提示展示
+         */
+        if (this.searchType === 'incident') {
+          this.noDataString = '';
+          if (this.bizIds?.some(id => [authorityBizId, hasDataBizId].includes(id))) {
+            this.noDataString = this.$t(
+              !greyed_spaces?.length
+                ? '你当前有 {0} 个空间权限，暂未开启灰度, 请联系管理员开启'
+                : '你当前有 {0} 个空间权限，暂无故障',
+              [window.space_list.length]
+            );
+          } else {
+            const diffBizIds = difference(this.bizIds, greyed_spaces);
+            if (diffBizIds?.length) {
+              const spaces = this.$store.getters.bizList
+                .filter(({ bk_biz_id }) => diffBizIds.includes(bk_biz_id))
+                .map(({ name, space_id }) => `${name} (#${space_id})`);
+              this.noDataString = this.$t('{0} 空间未开启故障分析功能，请联系管理员开启', [spaces.join(',')]);
+            }
           }
         } else {
-          this.noDataString = '';
+          if (!this.bizIds?.some(id => [authorityBizId, hasDataBizId].includes(id))) {
+            this.noDataString = this.$t('你当前有 {0} 个业务权限，暂无告警事件', [window.space_list.length]);
+          } else {
+            this.noDataString = '';
+          }
         }
       }
     } else {

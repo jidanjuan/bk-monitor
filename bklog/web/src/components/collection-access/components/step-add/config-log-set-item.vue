@@ -359,11 +359,12 @@
   import LogFilter from '../log-filter';
   import MultilineRegDialog from './multiline-reg-dialog';
   import DeviceMetadata from './device-metadata.vue'
+  import DeviceMetadata from './device-metadata.vue';
   export default {
     components: {
       MultilineRegDialog,
       LogFilter,
-      DeviceMetadata
+      DeviceMetadata,
     },
     props: {
       showType: {
@@ -718,7 +719,7 @@
       },
       extraLabelsChange(val) {
         this.$set(this.subFormData.params, 'extra_labels', val);
-      }
+      },
     },
   };
 </script>

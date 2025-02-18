@@ -109,6 +109,8 @@ export default {
   新建组: 'New Group',
   自动转换: 'Auto Conversion',
   修改后重试: 'Retry after modification',
+  设为默认: 'Set as default',
+  取消默认: 'Remove default',
 
   // 规范：平台特性 术语
   新建节点: 'New Probe',
@@ -493,4 +495,11 @@ export default {
   K8S对象列表: 'K8S Object List',
   指标视图: 'Metric View',
   K8S集群数据详情: 'K8S Cluster Data Details',
+  回到旧版: 'Back to Legacy',
+  切换新版: 'Switch to New Version',
+  CPU使用率: 'CPU Usage',
+  撤回下钻: 'Recall Drill-down',
+  取消聚合: 'Cancel Aggregation',
+  聚合: 'Aggregate',
+  清空过滤条件: 'Clear Filter Conditions',
 };
