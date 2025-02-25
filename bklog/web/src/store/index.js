@@ -41,8 +41,6 @@ import {
   getStorageIndexItem,
 } from '@/common/util';
 import { handleTransformToTimestamp } from '@/components/time-range/utils';
-// import axios from 'axios';
-import { axiosInstance } from '@/api';
 import Vuex from 'vuex';
 
 import { deepClone } from '../components/monitor-echarts/utils';
@@ -60,6 +58,8 @@ import globals from './globals';
 import RequestPool from './request-pool';
 import retrieve from './retrieve';
 import RouteUrlResolver from './url-resolver';
+// import axios from 'axios';
+import { axiosInstance } from '@/api';
 import http from '@/api';
 
 Vue.use(Vuex);
@@ -290,7 +290,6 @@ const store = new Vuex.Store({
   },
   // 公共 mutations
   mutations: {
-
     updatetableJsonFormatDepth(state, val) {
       state.tableJsonFormatDepth = val;
     },

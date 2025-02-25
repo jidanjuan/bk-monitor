@@ -31,7 +31,6 @@ import Vue from 'vue';
 import LogButton from '@/components/log-button';
 import i18n from '@/language/i18n';
 import docsLinkMixin from '@/mixins/docs-link-mixin';
-
 import { debounce } from 'lodash';
 
 import App from './App';

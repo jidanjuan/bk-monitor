@@ -580,11 +580,13 @@ export default class DashboardAside extends tsc<IProps, IEvents> {
         try {
           const res = await migrateDashboard({ dashboard_uid: item.uid, bk_biz_id: this.bizId });
           const failedTotal = res.failed_total === 0;
-            this.$bkMessage({
-              message: Object.keys(res).length ? this.$t(`更新成功${!failedTotal ? ',部分旧面板更新失败' : ''}`) : this.$t('仪表盘内没有要更新的旧面板'),
-              theme: failedTotal ? 'success' : 'warning',
-            });
-            this.handleFetchGrafanaTree();
+          this.$bkMessage({
+            message: Object.keys(res).length
+              ? this.$t(`更新成功${!failedTotal ? ',部分旧面板更新失败' : ''}`)
+              : this.$t('仪表盘内没有要更新的旧面板'),
+            theme: failedTotal ? 'success' : 'warning',
+          });
+          this.handleFetchGrafanaTree();
         } catch (error) {
           this.$bkMessage({ message: error, theme: 'error' });
         }

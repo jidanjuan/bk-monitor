@@ -72,8 +72,9 @@ export default class MyComponent extends tsc<object> {
     this.showAlert = !localStorage.getItem(UPDATE_GRAFANA_KEY);
     if (this.$store.getters.bizIdChangePedding) {
       this.loading = true;
-      this.grafanaUrl = `${this.orignUrl}${this.$store.getters.bizIdChangePedding.replace('/home', '')}/?orgName=${this.$store.getters.bizId
-        }${this.getUrlParamsString()}`;
+      this.grafanaUrl = `${this.orignUrl}${this.$store.getters.bizIdChangePedding.replace('/home', '')}/?orgName=${
+        this.$store.getters.bizId
+      }${this.getUrlParamsString()}`;
       setTimeout(() => (this.loading = false), 2000);
       return;
     }
@@ -127,8 +128,9 @@ export default class MyComponent extends tsc<object> {
       // );
     } else {
       const isFavorite = this.$route.name === FavoriteDashboardRouteName;
-      grafanaUrl = `${this.orignUrl}grafana/${isFavorite && !this.url?.startsWith('d/') ? `d/${this.url}` : this.url}?orgName=${this.$store.getters.bizId
-        }${this.getUrlParamsString()}`;
+      grafanaUrl = `${this.orignUrl}grafana/${isFavorite && !this.url?.startsWith('d/') ? `d/${this.url}` : this.url}?orgName=${
+        this.$store.getters.bizId
+      }${this.getUrlParamsString()}`;
       isFavorite && this.handleSetDashboardCache(this.url);
     }
     return grafanaUrl;
