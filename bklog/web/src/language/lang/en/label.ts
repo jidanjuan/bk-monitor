@@ -733,4 +733,6 @@ export default {
   另存为新收藏: 'Save as a new favorite',
   'JSON 字段动态新增': 'JSON field dynamically added',
   对象: 'Object',
+  待选列表: 'List to be selected:',
+  常驻筛选: 'Persistent filtering:',
 };
