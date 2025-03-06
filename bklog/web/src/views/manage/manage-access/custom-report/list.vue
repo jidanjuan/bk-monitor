@@ -158,7 +158,7 @@
           >
             <template #default="props">
               <span>
-                {{ props.row.created_at || '--' }}
+                {{ formatDateString(props.row.created_at) || '--' }}
               </span>
             </template>
           </bk-table-column>
@@ -170,7 +170,7 @@
           >
             <template #default="props">
               <span>
-                {{ props.row.updated_at || '--' }}
+                {{ formatDateString(props.row.updated_at) || '--' }}
               </span>
             </template>
           </bk-table-column>
@@ -575,6 +575,24 @@
           this.selectLabelList = [];
         }
       },
+      formatDateString(dateStr) {
+        if (!dateStr) {
+          return '';
+        }
+        dateStr = dateStr.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+            throw new Error('Invalid date format');
+        }
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // 月份从0开始
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      }
     },
   };
 </script>
