@@ -796,4 +796,5 @@ export default {
   我的: 'My',
   设置筛选: 'Set filter',
   未编组: 'Unorganized',
+  我的收藏: 'My favorites',
 };

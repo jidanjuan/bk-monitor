@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /*
@@ -1091,7 +1090,7 @@ const store = new Vuex.Store({
       commit('updateIndexSetFieldConfig', {});
       commit('updateVisibleFields', []);
 
-      if (!ids.length) {
+      if (!ids.length || ids.includes('')) {
         return;
       }
       commit('resetIndexFieldInfo', { is_loading: true });
