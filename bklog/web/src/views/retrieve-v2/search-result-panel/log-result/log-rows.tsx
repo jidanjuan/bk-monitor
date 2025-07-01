@@ -37,11 +37,12 @@ import useLocale from '@/hooks/use-locale';
 import useResizeObserve from '@/hooks/use-resize-observe';
 import useStore from '@/hooks/use-store';
 import useWheel from '@/hooks/use-wheel';
-
+import { logSourceField } from '@/store/default-values.ts';
 import PopInstanceUtil from '../../../../global/pop-instance-util';
 import ExpandView from '../../components/result-cell-element/expand-view.vue';
 import OperatorTools from '../../components/result-cell-element/operator-tools.vue';
 import LogCell from './log-cell';
+import { deepClone } from '@/common/util';
 import {
   LOG_SOURCE_F,
   ROW_EXPAND,
@@ -204,6 +205,20 @@ export default defineComponent({
       return store.getters.isAiAssistantActive ? w + 26 : w;
     });
 
+    const resultColumns = computed(() => {
+      const activeFields = visibleFields.value.length > 0 ? visibleFields.value : fullColumns.value;
+      const clonedFields = deepClone(activeFields);
+      const unionSourceTagExists = activeFields.some(field => field.tag === 'union-source');
+      const showSourceField = indexSetOperatorConfig.value?.isShowSourceField;
+    
+      if (showSourceField && !unionSourceTagExists) {
+        clonedFields.unshift(logSourceField());
+      } else if (!showSourceField && unionSourceTagExists) {
+        clonedFields.shift();
+      }
+    
+      return clonedFields;
+    });
     const originalColumns = computed(() => {
       return [
         {
@@ -295,7 +310,8 @@ export default defineComponent({
     const getFieldColumns = () => {
       if (showCtxType.value === 'table') {
         const columnList = [];
-        const columns = visibleFields.value.length > 0 ? visibleFields.value : fullColumns.value;
+        // const columns = visibleFields.value.length > 0 ? visibleFields.value : fullColumns.value;
+        const columns = resultColumns.value;
         let maxColWidth = operatorToolsWidth.value + 40;
         let logField = null;
 
