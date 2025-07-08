@@ -160,26 +160,26 @@ class ConditionOperator {
       const relation = this.containOperatorList.includes(value) ? 'OR' : 'AND';
 
       // 如果是通配符这里不做转换
-      if (this.wildcardList.includes(value)) {
-        return {
-          operator: value,
-          relation,
-          field: this.item.field,
-          isInclude: this.isWildcardMatch,
-          value: Array.isArray(this.item.value) ? this.item.value : [this.item.value],
-        };
-      }
-
-      // 包含和不包含操作符只有这两种，其他逻辑不走这个分支
-      const operator = this.containsStrList.includes(value) ? 'contains match phrase' : 'not contains match phrase';
-
+      // if (this.wildcardList.includes(value)) {
       return {
-        operator,
+        operator: value,
         relation,
         field: this.item.field,
         isInclude: this.isWildcardMatch,
         value: Array.isArray(this.item.value) ? this.item.value : [this.item.value],
       };
+      // }
+
+      // 包含和不包含操作符只有这两种，其他逻辑不走这个分支
+      // const operator = this.containsStrList.includes(value) ? 'contains match phrase' : 'not contains match phrase';
+
+      // return {
+      //   operator,
+      //   relation,
+      //   field: this.item.field,
+      //   isInclude: this.isWildcardMatch,
+      //   value: Array.isArray(this.item.value) ? this.item.value : [this.item.value],
+      // };
     }
 
     const { operator, field, value, isInclude = null, relation = 'OR' } = this.item;
