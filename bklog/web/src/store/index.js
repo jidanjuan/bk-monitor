@@ -249,10 +249,17 @@ const store = new Vuex.Store({
 
       const filterAddition = addition
         .filter(item => !item.disabled && item.field !== '_ip-select_')
-        .map(({ field, operator, value, showList }) => {
+        .map(({ field, operator, value, showList, relation }) => {
+          const operatorMappings = {
+            'contains match phrase': 'all contains match phrase',
+            'not contains match phrase': 'all not contains match phrase'
+          };
+          const operatorVal= relation === 'AND' && operatorMappings.hasOwnProperty(operator)
+          ? operatorMappings[operator]
+          : operator;
           const addition = {
             field,
-            operator,
+            operator:operatorVal,
             value,
           };
 
